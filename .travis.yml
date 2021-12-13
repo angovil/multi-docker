@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t angovil/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true angovil/react-test npm test
+
+after_success:
+  - docker build -t angovil/multi-client ./client
+  - docker build -t angovil/multi-nginx ./nginx
+  - docker build -t angovil/multi-server ./server
+  - docker build -t angovil/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push angovil/multi-client
+  - docker push angovil/multi-nginx
+  - docker push angovil/multi-server
+  - docker push angovil/multi-worker
